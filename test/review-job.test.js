@@ -5,6 +5,7 @@ import { buildInboundReviewJob, buildOutboundReviewJob, detectClientProtocol, ex
 test("detectClientProtocol maps known endpoints", () => {
   assert.equal(detectClientProtocol("/v1/messages"), "anthropic");
   assert.equal(detectClientProtocol("/v1/chat/completions"), "openai");
+  assert.equal(detectClientProtocol("/v1/responses"), "openai-responses");
   assert.equal(detectClientProtocol("/other"), "unknown");
 });
 

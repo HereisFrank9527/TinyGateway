@@ -17,6 +17,7 @@ TinyGateway 是一个本地 LLM 网关，用来统一管理 AI 编程工具的 p
 - 本地 HTTP 网关
 - Anthropic 风格 `POST /v1/messages`
 - OpenAI 风格 `POST /v1/chat/completions`
+- OpenAI Responses 风格 `POST /v1/responses`，用于 Codex 类客户端
 - `GET /v1/models`
 - 多 provider 配置
 - API key 本地保存和脱敏展示
@@ -126,6 +127,32 @@ claude
 ```
 
 `ANTHROPIC_AUTH_TOKEN` 在这里仅作为本地占位值。真正的上游 API key 由 TinyGateway 持有。
+
+## Codex 接入
+
+Codex 当前更偏向 OpenAI Responses API。TinyGateway 提供 `/v1/responses` 兼容入口，会把请求转换为内部 OpenAI chat/completions 流程，再把结果包装回 Responses 格式。
+
+示例 `~/.codex/config.toml`：
+
+```toml
+model_provider = "tinygateway"
+model = "fast"
+
+[model_providers.tinygateway]
+name = "TinyGateway"
+wire_api = "responses"
+requires_openai_auth = true
+base_url = "http://127.0.0.1:8787/"
+```
+
+Codex 仍需要一个本地占位 token。真实上游 API key 由 TinyGateway 的 Provider 配置持有：
+
+```powershell
+$env:OPENAI_API_KEY = "local"
+codex -m fast
+```
+
+`/v1/responses` 当前支持普通文本、message 数组、function tool、`previous_response_id` 本地上下文续接，以及基础流式 SSE 转换。
 
 ## 配置结构
 

@@ -8,6 +8,9 @@ export function detectClientProtocol(endpoint) {
   if (endpoint === "/v1/chat/completions") {
     return "openai";
   }
+  if (endpoint === "/v1/responses") {
+    return "openai-responses";
+  }
   return "unknown";
 }
 

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { Writable } from "node:stream";
 import test from "node:test";
 import { routeAdminRequest } from "../src/admin.js";
+
+const CURRENT_VERSION = fs.readFileSync(new URL("../VERSION", import.meta.url), "utf8").trim();
 
 test("admin attack simulation report aggregates audit events", async () => {
   const entries = [
@@ -131,7 +134,7 @@ test("admin update check compares local VERSION with latest GitHub release", asy
     });
 
     assert.equal(response.statusCode, 200);
-    assert.equal(response.body.currentVersion, "0.1.0");
+    assert.equal(response.body.currentVersion, CURRENT_VERSION);
     assert.equal(response.body.latestVersion, "9.9.9");
     assert.equal(response.body.updateAvailable, true);
     assert.equal(response.body.assetName, "TinyGateway-portable.zip");
@@ -159,7 +162,7 @@ test("admin status exposes local version", async () => {
   });
 
   assert.equal(response.statusCode, 200);
-  assert.equal(response.body.version, "0.1.0");
+  assert.equal(response.body.version, CURRENT_VERSION);
 });
 
 async function invokeAdmin(path, deps) {

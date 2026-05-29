@@ -18,6 +18,13 @@ import { decideGuardAction } from "./review/decision.js";
 import { applyRedactions } from "./review/redact.js";
 import { ConfirmationQueue } from "./confirmations.js";
 import { buildAttackSimulationBody, isAttackSimulatorModel, resolveAttackSimulationParams } from "./attack-simulator.js";
+import {
+  chatResponseToResponses,
+  previousMessagesFor,
+  rememberResponse,
+  responsesRequestToChat,
+  sendResponsesStream
+} from "./responses.js";
 
 const DEFAULT_STREAM_REVIEW_MAX_BYTES = 64 * 1024;
 
@@ -50,6 +57,7 @@ export function createRequestHandler({
     : defaultRunGuardReview,
   streamReviewMaxBytes = DEFAULT_STREAM_REVIEW_MAX_BYTES,
   confirmations = new ConfirmationQueue(),
+  responseStore = new Map(),
   shutdown
 }) {
   return async function requestHandler(req, res) {
@@ -65,6 +73,7 @@ export function createRequestHandler({
         runGuardReview,
         streamReviewMaxBytes,
         confirmations,
+        responseStore,
         shutdown
       });
     } catch (error) {
@@ -122,10 +131,35 @@ async function routeRequest(req, res, requestId, deps) {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/v1/responses") {
+    await handleResponsesRequest(req, res, requestId, state, deps);
+    return;
+  }
+
   sendJson(res, 404, {
     error: {
       type: "not_found",
       message: `No route for ${req.method} ${url.pathname}.`
+    }
+  });
+}
+
+async function handleResponsesRequest(req, res, requestId, state, deps) {
+  const responsesBody = await readJson(req);
+  const previousMessages = previousMessagesFor(deps.responseStore, responsesBody.previous_response_id);
+  const chatBody = responsesRequestToChat(responsesBody, previousMessages);
+  await handleModelRequest(req, res, requestId, "/v1/responses", state, deps, {
+    body: chatBody,
+    upstreamEndpoint: "/v1/chat/completions",
+    responseAdapter: {
+      async send({ upstream, target }) {
+        const responseBody = chatResponseToResponses({ body: upstream.body, request: responsesBody });
+        rememberResponse(deps.responseStore, responseBody.id, chatBody.messages, responseBody);
+        sendJson(res, upstream.status, responseBody, upstream.headers);
+      },
+      async sendStream({ upstream }) {
+        await sendResponsesStream({ res, upstream, request: responsesBody });
+      }
     }
   });
 }
@@ -137,11 +171,12 @@ function runtimeReviewer(reviewer = {}) {
   };
 }
 
-async function handleModelRequest(req, res, requestId, endpoint, state, deps) {
+async function handleModelRequest(req, res, requestId, endpoint, state, deps, options = {}) {
   const { modelIndex } = state;
-  const body = await readJson(req);
+  const body = options.body || await readJson(req);
+  const upstreamEndpoint = options.upstreamEndpoint || endpoint;
   const target = resolveTarget(body, modelIndex);
-  ensureEndpointMatchesProvider(endpoint, target.provider);
+  ensureEndpointMatchesProvider(upstreamEndpoint, target.provider);
 
   deps.audit.write({
     requestId,
@@ -205,7 +240,7 @@ async function handleModelRequest(req, res, requestId, endpoint, state, deps) {
   }
   const upstream = await deps.proxyProviderRequest({
     provider: target.provider,
-    endpoint,
+    endpoint: upstreamEndpoint,
     body: upstreamBody,
     sourceHeaders: normalizeHeaders(req.headers)
   });
@@ -222,7 +257,17 @@ async function handleModelRequest(req, res, requestId, endpoint, state, deps) {
     });
     writeHeaders(res, upstream.status, upstream.headers);
     const streamCapture = createStreamCapture(upstream, deps.streamReviewMaxBytes);
-    Readable.fromWeb(streamCapture.stream).pipe(res);
+    if (options.responseAdapter?.sendStream) {
+      await options.responseAdapter.sendStream({
+        upstream: {
+          ...upstream,
+          stream: streamCapture.stream
+        },
+        target
+      });
+    } else {
+      Readable.fromWeb(streamCapture.stream).pipe(res);
+    }
     if (!isInternalReviewerRequest(req.headers)) {
       res.once("finish", () => {
         deps.scheduleAuditReview({
@@ -256,7 +301,9 @@ async function handleModelRequest(req, res, requestId, endpoint, state, deps) {
     return;
   }
 
-  if (upstream.isJson) {
+  if (options.responseAdapter?.send) {
+    await options.responseAdapter.send({ upstream, target });
+  } else if (upstream.isJson) {
     sendJson(res, upstream.status, upstream.body, upstream.headers);
   } else {
     sendText(res, upstream.status, upstream.body, upstream.headers);

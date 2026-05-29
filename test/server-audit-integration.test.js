@@ -423,6 +423,127 @@ test("model handler schedules audit review after non-stream upstream response", 
   assert.equal(scheduled[0].upstream.status, 200);
 });
 
+test("responses endpoint converts request to chat completions and wraps response", async () => {
+  const events = [];
+  const proxiedBodies = [];
+  const state = makeState();
+  const handler = createRequestHandler({
+    getState: () => state,
+    audit: { write: (event) => events.push(event) },
+    proxyProviderRequest: async ({ endpoint, body }) => {
+      proxiedBodies.push({ endpoint, body });
+      return {
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: {
+          choices: [{ message: { role: "assistant", content: `model=${body.model}; input=${body.messages.at(-1).content}` } }],
+          usage: { prompt_tokens: 5, completion_tokens: 7, total_tokens: 12 }
+        },
+        rawText: '{"ok":true}',
+        isJson: true
+      };
+    },
+    scheduleAuditReview: () => {}
+  });
+
+  const response = await invoke(
+    handler,
+    makeRequest({
+      url: "/v1/responses",
+      body: {
+        model: "fast",
+        instructions: "system text",
+        input: "hello codex",
+        max_output_tokens: 100
+      }
+    })
+  );
+  const body = response.bodyJson();
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(proxiedBodies[0].endpoint, "/v1/chat/completions");
+  assert.equal(proxiedBodies[0].body.model, "gpt-fast");
+  assert.equal(proxiedBodies[0].body.max_tokens, 100);
+  assert.deepEqual(proxiedBodies[0].body.messages, [
+    { role: "system", content: "system text" },
+    { role: "user", content: "hello codex" }
+  ]);
+  assert.equal(body.object, "response");
+  assert.match(body.id, /^resp_/);
+  assert.equal(body.output_text, "model=gpt-fast; input=hello codex");
+  assert.equal(body.output[0].type, "message");
+  assert.deepEqual(body.usage, { input_tokens: 5, output_tokens: 7, total_tokens: 12 });
+  assert.equal(events.some((event) => event.event === "request" && event.endpoint === "/v1/responses"), true);
+});
+
+test("responses endpoint supports previous_response_id memory", async () => {
+  const proxiedBodies = [];
+  const state = makeState();
+  const handler = createRequestHandler({
+    getState: () => state,
+    audit: { write: () => {} },
+    proxyProviderRequest: async ({ body }) => {
+      proxiedBodies.push(body);
+      return {
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: { choices: [{ message: { role: "assistant", content: `answer ${proxiedBodies.length}` } }] },
+        rawText: '{"ok":true}',
+        isJson: true
+      };
+    },
+    scheduleAuditReview: () => {}
+  });
+
+  const first = await invoke(handler, makeRequest({ url: "/v1/responses", body: { model: "fast", input: "first" } }));
+  const firstId = first.bodyJson().id;
+  const second = await invoke(
+    handler,
+    makeRequest({ url: "/v1/responses", body: { model: "fast", previous_response_id: firstId, input: "second" } })
+  );
+
+  assert.equal(second.statusCode, 200);
+  assert.deepEqual(proxiedBodies[1].messages, [
+    { role: "user", content: "first" },
+    { role: "assistant", content: "answer 1" },
+    { role: "user", content: "second" }
+  ]);
+});
+
+test("responses endpoint converts chat completion stream to response SSE", async () => {
+  const state = makeState();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"hel"}}]}\n\n'));
+      controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"lo"}}]}\n\n'));
+      controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+      controller.close();
+    }
+  });
+  const handler = createRequestHandler({
+    getState: () => state,
+    audit: { write: () => {} },
+    proxyProviderRequest: async () => ({
+      status: 200,
+      headers: { "content-type": "text/event-stream" },
+      stream,
+      isStream: true
+    }),
+    scheduleAuditReview: () => {}
+  });
+
+  const response = await invoke(handler, makeRequest({ url: "/v1/responses", body: { model: "fast", input: "hi", stream: true } }));
+  const text = response.bodyText();
+
+  assert.equal(response.statusCode, 200);
+  assert.match(text, /event: response.created/);
+  assert.match(text, /event: response.output_text.delta/);
+  assert.match(text, /"delta":"hel"/);
+  assert.match(text, /event: response.completed/);
+  assert.match(text, /"output_text":"hello"/);
+  assert.match(text, /data: \[DONE\]/);
+});
+
 test("model handler skips audit scheduling for internal reviewer requests", async () => {
   const scheduled = [];
   const state = makeState();
