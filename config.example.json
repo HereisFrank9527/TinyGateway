@@ -1,0 +1,154 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8787
+  },
+  "audit": {
+    "enabled": true,
+    "directory": "logs"
+  },
+  "reviewer": {
+    "enabled": true,
+    "mode": "audit",
+    "context": "response",
+    "outboundReview": "off",
+    "provider": "",
+    "model": "",
+    "timeoutMs": 12000,
+    "failBehavior": "allow",
+    "holdTimeoutMs": 120000,
+    "confirmBehavior": "retry"
+  },
+  "attackSimulation": {
+    "enabled": false,
+    "modelId": "attack-sim",
+    "displayName": "通用攻击模拟",
+    "provider": "openai-main",
+    "model": "gpt-4.1-mini",
+    "allowClientParams": true,
+    "defaultScenario": "startup_poisoning",
+    "allowedScenarios": [
+      "startup_poisoning",
+      "prompt_injection",
+      "data_exfiltration"
+    ],
+    "defaultIntensity": "low",
+    "allowedIntensities": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "defaultInsertionStyle": "obvious",
+    "allowedInsertionStyles": [
+      "obvious",
+      "natural",
+      "hidden"
+    ],
+    "safeMode": "tool-intent"
+  },
+  "attackSimulators": [
+    {
+      "id": "attack-sim/startup-poisoning",
+      "displayName": "启动项投毒模拟",
+      "enabled": false,
+      "provider": "openai-main",
+      "model": "gpt-4.1-mini",
+      "scenario": "startup_poisoning",
+      "allowClientParams": false,
+      "defaultIntensity": "low",
+      "allowedIntensities": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "defaultInsertionStyle": "obvious",
+      "allowedInsertionStyles": [
+        "obvious",
+        "natural",
+        "hidden"
+      ],
+      "safeMode": "tool-intent"
+    }
+  ],
+  "modelMappings": [
+    {
+      "id": "sonnet",
+      "displayName": "Active Sonnet",
+      "provider": "anthropic-main",
+      "upstreamModel": "claude-sonnet-4-5-20250929",
+      "aliases": [
+        "claude-sonnet"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "fast",
+      "displayName": "Fast Model",
+      "provider": "openai-main",
+      "upstreamModel": "gpt-4.1-mini",
+      "aliases": [],
+      "enabled": true
+    },
+    {
+      "id": "deepseek",
+      "displayName": "Deepseek",
+      "provider": "deepseek",
+      "upstreamModel": "deepseek-v4-flash",
+      "aliases": [],
+      "enabled": true
+    }
+  ],
+  "providers": [
+    {
+      "id": "anthropic-main",
+      "type": "anthropic",
+      "baseUrl": "https://api.anthropic.com",
+      "apiKey": "replace-with-anthropic-key",
+      "models": [
+        {
+          "id": "claude-sonnet-4-5-20250929",
+          "displayName": "claude-sonnet-4-5-20250929",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "openai-main",
+      "type": "openai",
+      "baseUrl": "https://api.openai.com",
+      "apiKey": "replace-with-openai-key",
+      "models": [
+        {
+          "id": "gpt-4.1-mini",
+          "displayName": "gpt-4.1-mini",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "deepseek",
+      "type": "openai",
+      "baseUrl": "https://api.deepseek.com",
+      "apiKey": "replace-with-deepseek-key",
+      "models": [
+        {
+          "id": "deepseek-v4-flash",
+          "displayName": "deepseek-v4-flash",
+          "aliases": []
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "displayName": "deepseek-v4-pro",
+          "aliases": []
+        }
+      ]
+    },
+    {
+      "id": "deepseek-anthropic",
+      "type": "anthropic",
+      "baseUrl": "https://api.deepseek.com/anthropic",
+      "apiKey": "replace-with-deepseek-anthropic-key",
+      "models": []
+    }
+  ]
+}

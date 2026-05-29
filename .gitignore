@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Local runtime data
+logs/
+runtime/
+dist/
+
+# Local secrets/config
+.env
+.env.*
+*.local
+config.json
+
+# Local-only planning notes
+规划.md
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp

@@ -1,0 +1,16 @@
+{
+  "name": "tiny-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local LLM gateway with provider routing, key custody, model mapping, and reviewer-based auditing.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "build:portable": "powershell -ExecutionPolicy Bypass -File scripts/build-portable.ps1",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TinyGateway</title>
+    <link rel="stylesheet" href="/admin/app.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>TinyGateway</h1>
+          <p>本地 LLM 网关控制台</p>
+        </div>
+        <div class="status" id="statusBadge">加载中</div>
+        <nav class="tabs" aria-label="管理页面">
+          <button class="tab active" data-tab="overview">概览</button>
+          <button class="tab" data-tab="providers">Provider</button>
+          <button class="tab" data-tab="models">模型映射</button>
+          <button class="tab" data-tab="attack-simulators">攻击模拟</button>
+          <button class="tab" data-tab="reviewer">检查模型</button>
+          <button class="tab" data-tab="confirmations">确认队列</button>
+          <button class="tab" data-tab="audit">审计日志</button>
+          <button class="tab" data-tab="raw">配置 JSON</button>
+        </nav>
+      </aside>
+
+      <main class="layout">
+      <section class="panel active" id="overview">
+        <div class="grid metrics">
+          <div class="metric">
+            <span>网关地址</span>
+            <strong id="gatewayAddress">-</strong>
+          </div>
+          <div class="metric">
+            <span>Provider 数量</span>
+            <strong id="providerCount">0</strong>
+          </div>
+          <div class="metric">
+            <span>本地模型</span>
+            <strong id="modelCount">0</strong>
+          </div>
+          <div class="metric">
+            <span>配置状态</span>
+            <strong id="configState">-</strong>
+          </div>
+          <div class="metric">
+            <span>当前版本</span>
+            <strong id="currentVersion">-</strong>
+          </div>
+          <div class="metric">
+            <span>更新状态</span>
+            <strong id="updateState">检查中</strong>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h2>客户端可见模型</h2>
+            <button id="refreshAll">刷新</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>模型名</th>
+                  <th>显示名</th>
+                  <th>Provider</th>
+                  <th>上游模型</th>
+                </tr>
+              </thead>
+              <tbody id="visibleModels"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="providers">
+        <div class="section-head">
+          <h2>Provider</h2>
+          <button id="addProvider">新增 Provider</button>
+        </div>
+        <div id="providersList" class="stack"></div>
+      </section>
+
+      <section class="panel" id="models">
+        <div class="section-head">
+          <h2>模型映射</h2>
+          <button id="addMapping">新增映射</button>
+        </div>
+        <div id="mappingsList" class="stack"></div>
+      </section>
+
+      <section class="panel" id="attack-simulators">
+        <div class="section-head">
+          <div>
+            <h2>攻击模拟</h2>
+            <p class="hint">攻击模拟是虚拟模型：客户端调用 <code>attack-sim</code> 或 <code>attack-sim/...</code>，网关用选定上游模型生成模拟响应，再走常规 reviewer / guard 链路。模拟期间如果客户端弹出任何命令、文件、网络或 git 操作确认，请一律拒绝。</p>
+          </div>
+          <button id="addAttackSimulator">新增攻击模拟</button>
+        </div>
+        <div class="section sub-section">
+          <div class="section-head">
+            <h3>模式说明</h3>
+          </div>
+          <div class="mode-grid">
+            <div><strong>abstract</strong><span>抽象风险，只用占位符测试语义识别。</span></div>
+            <div><strong>inert</strong><span>高仿真命令/路径/脚本/密钥形态，但全部不可执行。</span></div>
+            <div><strong>tool-intent</strong><span>模拟诱导用户批准 shell、文件、网络、git 等工具操作。</span></div>
+            <div><strong>lab</strong><span>真实攻击链形态的实验室样本，危险执行点必须为空实现或无效目标。</span></div>
+          </div>
+        </div>
+        <div id="attackSimulationPanel" class="stack"></div>
+        <div class="section sub-section">
+          <div class="section-head">
+            <h3>模拟攻击报告</h3>
+            <button id="refreshAttackReport">刷新报告</button>
+          </div>
+          <div id="attackReportList" class="audit-list"></div>
+        </div>
+        <div class="section sub-section">
+          <div class="section-head">
+            <h3>固定场景路由</h3>
+          </div>
+          <div id="attackSimulatorsList" class="stack"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="reviewer">
+        <div class="section-head">
+          <h2>检查模型</h2>
+          <button id="saveReviewer">保存检查模型</button>
+        </div>
+        <div class="form-grid">
+          <label>
+            模式
+            <select id="reviewerMode">
+              <option value="off">关闭：不调用检查模型</option>
+              <option value="audit">审计：只记录，不阻断</option>
+              <option value="guard">拦截：入站响应可阻断 / 确认 / 脱敏</option>
+            </select>
+          </label>
+          <label>
+            上下文
+            <select id="reviewerContext">
+              <option value="response">response：只看响应</option>
+              <option value="full">full：请求和响应都给检查模型</option>
+            </select>
+          </label>
+          <label>
+            出站审查
+            <select id="reviewerOutboundReview">
+              <option value="off">off：不审查出站请求</option>
+              <option value="audit">audit：审查但不阻断</option>
+              <option value="guard">guard：发往上游前审查</option>
+            </select>
+          </label>
+          <label>
+            确认处理
+            <select id="reviewerConfirmBehavior">
+              <option value="hold">hold：挂起原请求，确认后自动继续</option>
+              <option value="retry">retry：返回确认 ID，由客户端重试</option>
+              <option value="allow">allow：确认降级为放行</option>
+              <option value="block">block：确认降级为阻断</option>
+            </select>
+          </label>
+          <label>
+            hold 超时 ms
+            <input id="reviewerHoldTimeoutMs" type="number" min="1000" step="1000">
+          </label>
+          <label>
+            Provider
+            <select id="reviewerProvider"></select>
+          </label>
+          <label>
+            模型
+            <span id="reviewerModelControl"></span>
+          </label>
+          <label>
+            超时 ms
+            <input id="reviewerTimeoutMs" type="number" min="1000" step="500">
+          </label>
+          <label>
+            失败处理
+            <select id="reviewerFailBehavior">
+              <option value="allow">allow：放行</option>
+              <option value="audit">audit：只记录</option>
+              <option value="block">block：阻断</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" id="confirmations">
+        <div class="section-head">
+          <h2>确认队列</h2>
+          <button id="refreshConfirmations">刷新确认队列</button>
+        </div>
+        <p class="hint">当检查模型返回 confirm 时，hold 会挂起原请求，点击放行后原请求自动继续；retry/queue 会返回 409 和确认 ID，需要客户端用相同请求加上 <code>x-tinygateway-confirmation</code> 重试。</p>
+        <div id="confirmationsList" class="confirmation-list"></div>
+      </section>
+
+      <section class="panel" id="audit">
+        <div class="section-head">
+          <h2>审计日志</h2>
+          <button id="refreshAudit">刷新审计</button>
+        </div>
+        <div id="auditList" class="audit-list"></div>
+      </section>
+
+      <section class="panel" id="raw">
+        <div class="section-head">
+          <h2>配置 JSON</h2>
+          <button id="saveRaw">保存配置</button>
+        </div>
+        <textarea id="rawConfig" class="raw-editor" spellcheck="false"></textarea>
+      </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script type="module" src="/admin/app.js"></script>
+  </body>
+</html>
