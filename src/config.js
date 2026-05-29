@@ -101,7 +101,9 @@ function normalizeConfig(config) {
     },
     audit: {
       enabled: config.audit?.enabled !== false,
-      directory: config.audit?.directory || "logs"
+      directory: config.audit?.directory || "logs",
+      retentionHours: normalizePositiveNumber(config.audit?.retentionHours, 48),
+      maxSizeMb: normalizePositiveNumber(config.audit?.maxSizeMb, 20)
     },
     reviewer: normalizeReviewerConfig(config.reviewer),
     attackSimulation: normalizeAttackSimulationConfig(config.attackSimulation),

@@ -84,6 +84,9 @@ export async function routeAdminRequest({ req, res, url, state, configStore, aud
   if (req.method === "PUT" && url.pathname === "/api/admin/config") {
     const body = await readJson(req);
     const saved = configStore.save(body);
+    if (typeof audit.configure === "function") {
+      audit.configure(configStore.current().config);
+    }
     sendJson(res, 200, saved);
     return true;
   }

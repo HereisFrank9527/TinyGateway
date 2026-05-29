@@ -29,6 +29,15 @@ test("normalizeReviewResult fills safe defaults", () => {
   assert.equal(result.suggestedUserPrompt, "");
 });
 
+test("normalizeReviewResult uses Chinese fallback reason", () => {
+  const result = normalizeReviewResult({
+    risk: "low",
+    action: "allow"
+  });
+
+  assert.equal(result.reason, "未提供审查原因。");
+});
+
 test("normalizeReviewResult preserves redact suggestions", () => {
   const result = normalizeReviewResult({
     risk: "high",
@@ -47,7 +56,7 @@ test("normalizeReviewResult preserves redact suggestions", () => {
   assert.deepEqual(result.redactions, [
     { text: "sk-live-123", replacement: "[REDACTED_KEY]" },
     { path: "$.choices[0].message.content", text: "token", replacement: "[REDACTED]" },
-    { text: "missing replacement", replacement: "[REDACTED]" }
+    { text: "missing replacement", replacement: "[已脱敏]" }
   ]);
 });
 

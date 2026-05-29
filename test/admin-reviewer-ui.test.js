@@ -67,3 +67,13 @@ test("admin UI exposes attack simulation report", () => {
   assert.match(app, /\/api\/admin\/attack-simulations\/report/);
   assert.match(html, /模式说明/);
 });
+
+test("admin UI exposes audit retention settings", () => {
+  assert.match(html, /id="auditRetentionHours"/);
+  assert.match(html, /id="auditMaxSizeMb"/);
+  assert.match(html, /id="saveAuditSettings"/);
+  assert.match(app, /renderAuditSettings/);
+  assert.match(app, /saveAuditSettings/);
+  assert.match(app, /retentionHours:\s*Number\(\$\("#auditRetentionHours"\)\.value \|\| 48\)/);
+  assert.match(app, /maxSizeMb:\s*Number\(\$\("#auditMaxSizeMb"\)\.value \|\| 20\)/);
+});

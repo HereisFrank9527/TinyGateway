@@ -45,7 +45,7 @@ function redactString(value, redactions, markChanged) {
     if (!text || !output.includes(text)) {
       continue;
     }
-    const replacement = typeof redaction.replacement === "string" && redaction.replacement ? redaction.replacement : "[REDACTED]";
+    const replacement = typeof redaction.replacement === "string" && redaction.replacement ? redaction.replacement : "[已脱敏]";
     output = output.split(text).join(replacement);
   }
   if (output !== value) {

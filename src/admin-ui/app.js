@@ -74,6 +74,7 @@ function bindTabs() {
 function bindActions() {
   $("#refreshAll").addEventListener("click", refreshAll);
   $("#refreshAudit").addEventListener("click", loadAudit);
+  $("#saveAuditSettings").addEventListener("click", saveAuditSettings);
   $("#refreshConfirmations").addEventListener("click", loadConfirmations);
   $("#refreshAttackReport").addEventListener("click", loadAttackReport);
   $("#saveRaw").addEventListener("click", saveRawConfig);
@@ -155,6 +156,7 @@ function render() {
   renderAttackSimulation();
   renderAttackSimulators();
   renderAttackReport();
+  renderAuditSettings();
   renderReviewer();
   $("#rawConfig").value = JSON.stringify(config, null, 2);
 }
@@ -676,6 +678,12 @@ function renderAudit(entries) {
   $("#auditList").innerHTML = renderAuditEntries(entries);
 }
 
+function renderAuditSettings() {
+  config.audit = config.audit || {};
+  $("#auditRetentionHours").value = config.audit.retentionHours || 48;
+  $("#auditMaxSizeMb").value = config.audit.maxSizeMb || 20;
+}
+
 function renderConfirmations() {
   const list = $("#confirmationsList");
   if (!list) {
@@ -919,6 +927,15 @@ async function saveReviewer() {
     holdTimeoutMs: Number($("#reviewerHoldTimeoutMs").value || 120000),
     failBehavior: $("#reviewerFailBehavior").value,
     confirmBehavior: $("#reviewerConfirmBehavior").value
+  };
+  await saveConfig(config);
+}
+
+async function saveAuditSettings() {
+  config.audit = {
+    ...(config.audit || {}),
+    retentionHours: Number($("#auditRetentionHours").value || 48),
+    maxSizeMb: Number($("#auditMaxSizeMb").value || 20)
   };
   await saveConfig(config);
 }

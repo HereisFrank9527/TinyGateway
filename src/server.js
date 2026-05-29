@@ -347,7 +347,7 @@ async function handleOutboundReviewIfNeeded({ req, res, requestId, endpoint, sta
       error: {
         type: "confirmation_required",
         direction: "outbound",
-        message: review.suggestedUserPrompt || review.reason || "Request requires user confirmation.",
+        message: review.suggestedUserPrompt || review.reason || "该请求需要用户确认。",
         confirmationId: confirmation.id,
         review,
         decision
@@ -406,7 +406,7 @@ async function handleOutboundReviewIfNeeded({ req, res, requestId, endpoint, sta
     error: {
       type: "review_blocked",
       direction: "outbound",
-      message: review.reason || "Request blocked by reviewer.",
+      message: review.reason || "请求已被检查模型阻断。",
       review,
       decision
     }
@@ -641,7 +641,7 @@ async function handleGuardReviewIfNeeded({ req, res, requestId, endpoint, state,
     sendJson(res, 409, {
       error: {
         type: "confirmation_required",
-        message: review.suggestedUserPrompt || review.reason || "Response requires user confirmation.",
+        message: review.suggestedUserPrompt || review.reason || "该响应需要用户确认。",
         confirmationId: confirmation.id,
         review,
         decision
@@ -696,7 +696,7 @@ async function handleGuardReviewIfNeeded({ req, res, requestId, endpoint, state,
   sendJson(res, decision.statusCode, {
     error: {
       type: "review_blocked",
-      message: review.reason || "Response blocked by reviewer.",
+      message: review.reason || "响应已被检查模型阻断。",
       review,
       decision
     }

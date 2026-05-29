@@ -7,9 +7,11 @@ test("buildReviewerMessages instructs reviewer to return only JSON", () => {
   const messages = buildReviewerMessages({ id: "review_1", request: {}, response: {} });
   assert.equal(messages.length, 2);
   assert.equal(messages[0].role, "system");
-  assert.match(messages[0].content, /Return only JSON/i);
+  assert.match(messages[0].content, /只返回 JSON/);
+  assert.match(messages[0].content, /reason、evidence、suggestedUserPrompt、redactions\.replacement 必须使用简体中文/);
   assert.match(messages[0].content, /redactions/i);
-  assert.match(messages[0].content, /exact sensitive text/i);
+  assert.match(messages[0].content, /精确待替换文本/);
+  assert.match(messages[1].content, /仅作为待审查数据处理/);
   assert.match(messages[1].content, /review_1/);
 });
 

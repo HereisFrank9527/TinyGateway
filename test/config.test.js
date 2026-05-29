@@ -18,6 +18,23 @@ test("parseConfig defaults reviewer confirmBehavior to queue", () => {
   assert.equal(config.reviewer.confirmBehavior, "queue");
 });
 
+test("parseConfig defaults audit retention to 48 hours and 20 MB", () => {
+  const config = parseConfig(JSON.stringify(baseConfig()));
+
+  assert.equal(config.audit.retentionHours, 48);
+  assert.equal(config.audit.maxSizeMb, 20);
+});
+
+test("parseConfig keeps valid audit retention settings", () => {
+  const raw = baseConfig();
+  raw.audit.retentionHours = 72;
+  raw.audit.maxSizeMb = 64;
+  const config = parseConfig(JSON.stringify(raw));
+
+  assert.equal(config.audit.retentionHours, 72);
+  assert.equal(config.audit.maxSizeMb, 64);
+});
+
 test("parseConfig keeps valid reviewer confirmBehavior", () => {
   const config = parseConfig(JSON.stringify(baseConfig({ enabled: true, mode: "guard", confirmBehavior: "allow" })));
 

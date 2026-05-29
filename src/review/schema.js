@@ -69,7 +69,7 @@ export function normalizeReviewResult(result) {
 
   const confidence = clampConfidence(result.confidence);
   const evidence = normalizeStringArray(result.evidence);
-  const reason = typeof result.reason === "string" && result.reason.trim() ? result.reason.trim() : "No reason provided.";
+  const reason = typeof result.reason === "string" && result.reason.trim() ? result.reason.trim() : "未提供审查原因。";
   const requiresUserApproval =
     typeof result.requiresUserApproval === "boolean" ? result.requiresUserApproval : ["confirm", "block"].includes(action);
   const suggestedUserPrompt = typeof result.suggestedUserPrompt === "string" ? result.suggestedUserPrompt : "";
@@ -119,7 +119,7 @@ function normalizeRedactions(value) {
       }
       const redaction = {
         text,
-        replacement: typeof item.replacement === "string" && item.replacement ? item.replacement : "[REDACTED]"
+        replacement: typeof item.replacement === "string" && item.replacement ? item.replacement : "[已脱敏]"
       };
       if (typeof item.path === "string" && item.path) {
         redaction.path = item.path;

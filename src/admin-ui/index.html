@@ -206,6 +206,23 @@
           <h2>审计日志</h2>
           <button id="refreshAudit">刷新审计</button>
         </div>
+        <div class="section sub-section">
+          <div class="section-head">
+            <h3>日志保留</h3>
+            <button id="saveAuditSettings">保存日志设置</button>
+          </div>
+          <div class="form-grid">
+            <label>
+              保存时间（小时）
+              <input id="auditRetentionHours" type="number" min="1" step="1">
+            </label>
+            <label>
+              最大占用（MB）
+              <input id="auditMaxSizeMb" type="number" min="1" step="1">
+            </label>
+          </div>
+          <p class="hint">默认 48 小时 / 20 MB。写入新日志时会自动清理过期记录，并在超出空间上限时保留最新记录。</p>
+        </div>
         <div id="auditList" class="audit-list"></div>
       </section>
 

@@ -5,7 +5,9 @@
   },
   "audit": {
     "enabled": true,
-    "directory": "logs"
+    "directory": "logs",
+    "retentionHours": 48,
+    "maxSizeMb": 20
   },
   "reviewer": {
     "enabled": true,

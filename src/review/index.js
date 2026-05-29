@@ -101,7 +101,7 @@ export async function runGuardReview({
         action: "block",
         confidence: 0,
         categories: ["unknown"],
-        reason: `Reviewer failed: ${error.message}`,
+        reason: `检查模型调用失败：${error.message}`,
         evidence: [],
         requiresUserApproval: true,
         suggestedUserPrompt: ""
@@ -112,7 +112,7 @@ export async function runGuardReview({
       action: "audit",
       confidence: 0,
       categories: ["unknown"],
-      reason: `Reviewer failed: ${error.message}`,
+      reason: `检查模型调用失败：${error.message}`,
       evidence: [],
       requiresUserApproval: false,
       suggestedUserPrompt: ""

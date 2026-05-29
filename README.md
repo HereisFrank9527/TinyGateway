@@ -139,7 +139,9 @@ claude
   },
   "audit": {
     "enabled": true,
-    "directory": "logs"
+    "directory": "logs",
+    "retentionHours": 48,
+    "maxSizeMb": 20
   },
   "reviewer": {
     "enabled": false,
@@ -267,6 +269,8 @@ TinyGateway 不做机械审查，不走关键词、路径、命令、正则类�
 
 审查只走 reviewer 模型。
 
+检查模型输出的 JSON 字段名和 `risk` / `action` / `categories` 枚举值保持英文，便于网关执行决策；面向用户展示的 `reason`、`evidence`、`suggestedUserPrompt` 和脱敏替换说明要求使用中文。
+
 模式：
 
 - `off`：关闭审查
@@ -327,6 +331,8 @@ POST /api/admin/confirmations/:id/block
 ```text
 logs/audit.jsonl
 ```
+
+默认保留最近 48 小时，且最大占用 20 MB。可以在 `config.json` 的 `audit.retentionHours` 和 `audit.maxSizeMb` 中调整，也可以在管理端“审计日志”页保存。
 
 会记录：
 
