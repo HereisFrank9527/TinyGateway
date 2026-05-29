@@ -2,6 +2,7 @@
   "name": "tiny-gateway",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Local LLM gateway with provider routing, key custody, model mapping, and reviewer-based auditing.",
   "type": "module",
   "scripts": {

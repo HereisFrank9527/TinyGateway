@@ -20,6 +20,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $output "runtime") | Out-Nu
 Copy-Item -LiteralPath (Join-Path $root "src") -Destination (Join-Path $output "src") -Recurse
 Copy-Item -LiteralPath (Join-Path $root "package.json") -Destination (Join-Path $output "package.json")
 Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination (Join-Path $output "README.md")
+Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination (Join-Path $output "LICENSE")
 Copy-Item -LiteralPath (Join-Path $root "config.example.json") -Destination (Join-Path $output "config.example.json")
 Copy-Item -LiteralPath (Join-Path $root "VERSION") -Destination (Join-Path $output "VERSION")
 

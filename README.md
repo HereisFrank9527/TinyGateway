@@ -1,5 +1,11 @@
 # TinyGateway
 
+[![Release](https://img.shields.io/github/v/release/HereisFrank9527/TinyGateway?label=release)](https://github.com/HereisFrank9527/TinyGateway/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
+![Portable](https://img.shields.io/badge/build-portable-lightgrey)
+![Local First](https://img.shields.io/badge/local--first-gateway-2f855a)
+
 TinyGateway 是一个本地 LLM 网关，用来统一管理 AI 编程工具的 provider、baseUrl、API key、模型映射、模型列表和 reviewer 检查模型。
 
 它不是普通模型切换器。客户端只连接 TinyGateway，TinyGateway 负责把稳定的本地模型名路由到不同上游，并在需要时把请求和响应交给检查模型审查。
@@ -340,3 +346,7 @@ logs/audit.jsonl
 ```powershell
 npm test
 ```
+
+## 开源协议
+
+本项目使用 MIT License，详见 `LICENSE`。
